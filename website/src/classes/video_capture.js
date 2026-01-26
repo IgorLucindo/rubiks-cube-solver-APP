@@ -1,4 +1,4 @@
-import { applySmartBrightness, sortGridByPosition, getAverageColor} from "./utils/computer_vision_utils.js";
+import { applySmartBrightness, sortGridByPosition, getAverageColor} from "../utils/computer_vision_utils.js";
 
 
 export class VideoCapture {
