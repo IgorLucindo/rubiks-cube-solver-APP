@@ -1,20 +1,23 @@
-import { onOpenCvReady } from "./utils/video_utils.js";
+import { VideoCapture } from "./classes/video_capture.js";
 
 
-let video = document.getElementById('videoInput');
-let cap = null; // Video Capture object
-let src = null; // Source Matrix
-let dst = null; // Destination Matrix (for display)
+// Define the startup function
+function startApp() {
+    console.log("OpenCV is ready. Starting App...");
+    // Instantiate the class with the IDs of your video and canvas elements
+    const videoCap = new VideoCapture('videoInput', 'canvasOutput');
+    videoCap.start();
+    
+    // Optional: Handle cleanup when user closes tab
+    window.onunload = () => videoCap.stop();
+}
 
-// Helper Matrices (Allocated once to save memory)
-let gray, blurred, edges, contours, hierarchy, approx;
 
-window._onOpenCvReady = () => onOpenCvReady();
+// 1. Attach to window so the HTML script tag can call it
+window._onOpenCvReady = startApp;
 
-
-
-// Optional: Cleanup on page unload (though browser handles this mostly)
-window.onunload = () => {
-    src.delete(); dst.delete(); gray.delete(); blurred.delete();
-    edges.delete(); contours.delete(); hierarchy.delete(); approx.delete();
-};
+// 2. Fallback: If OpenCV loaded faster than this module, 'onload' might have missed.
+// Check if 'cv' is already defined globally.
+if (typeof cv !== 'undefined' && cv.Mat) {
+    startApp();
+}
