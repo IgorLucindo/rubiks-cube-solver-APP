@@ -70,10 +70,41 @@ export class VideoCapture {
     }
 
 
-    drawCubeOverlay(candidateRects) {
-        if (candidateRects.length === 9) {
+    filterUniqueRects(rects, minDistance = 20) {
+        // Sort by Area
+        rects.sort((a, b) => (b.w * b.h) - (a.w * a.h));
+
+        const unique = [];
+
+        for (let r of rects) {
+            let isDuplicate = false;
+
+            for (let u of unique) {
+                // Calculate distance between centers
+                let dx = r.cx - u.cx;
+                let dy = r.cy - u.cy;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+
+                // If this rect is physically too close to an existing one, it's a duplicate
+                if (distance < minDistance) {
+                    isDuplicate = true;
+                    break;
+                }
+            }
+
+            if (!isDuplicate) {
+                unique.push(r);
+            }
+        }
+
+        return unique;
+    }
+
+
+    drawCubeOverlay(rects) {
+        if (rects.length === 9) {
             // Sort them into the correct 3x3 Grid
-            let sortedRects = sortGridByPosition(candidateRects);
+            let sortedRects = sortGridByPosition(rects);
 
             // Visual Feedback (Green for Success)
             sortedRects.forEach((rect, index) => {
@@ -93,7 +124,7 @@ export class VideoCapture {
 
         } else {
             // Fallback: Yellow boxes (Searching...)
-            candidateRects.forEach(rect => {
+            rects.forEach(rect => {
                 let pt1 = new cv.Point(rect.x, rect.y);
                 let pt2 = new cv.Point(rect.x + rect.w, rect.y + rect.h);
                 cv.rectangle(this.dst, pt1, pt2, [0, 255, 255, 255], 2); 
@@ -158,8 +189,9 @@ export class VideoCapture {
                 }
             }
 
-            // draw and return the sorted grid
-            let validGrid = this.drawCubeOverlay(candidateRects);
+            // Draw and return the sorted grid
+            let uniqueRects = this.filterUniqueRects(candidateRects, 30);
+            let validGrid = this.drawCubeOverlay(uniqueRects);
 
             if (validGrid) {
                 // SUCCESS! 'validGrid' contains the 9 sorted rects.
