@@ -19,8 +19,21 @@ export class VirtualCube {
         this.cubeGroup = null;
         this.cubies = [];
 
-        // Rotation Animation
-        this.targetRotation = { x: 0, y: Math.PI, z: 0 };
+        this.scaleState = {
+            active: false,
+            startTime: 0,
+            duration: 600,
+            baseScale: 1.0,
+            maxScale: 1.15
+        };
+        this.rotationState = {
+            active: false,
+            startTime: 0,
+            duration: 800,
+            start: { x: 0, y: 0, z: 0 },
+            end: { x: 0, y: 0, z: 0 },
+            delayBeforeNext: 1200
+        };
         
         this.initThreeJS();
         
@@ -86,6 +99,7 @@ export class VirtualCube {
 
     
     loop(faceColors) {
+        this.animateScale();
         this.animateRotation();
         this.renderer.render(this.scene, this.camera);
 
@@ -94,23 +108,25 @@ export class VirtualCube {
             if (now - this.lastScanTime > this.scan_delay) {
                 const faceId = this.addFace(faceColors);
                 if (faceId) {
-                    console.log(`Captured Face: ${faceId}`);
                     this.lastScanTime = now;
                     this.update3DColors(faceId, faceColors);
 
-                    // 1. CONFIRMATION: Immediately rotate to show the face we just scanned
-                    this.targetRotation = this.getRotationForFace(faceId);
+                    // Trigger animation
+                    this.scaleState.active = true;
+                    this.scaleState.startTime = Date.now();
+                    this.rotationState.duration = 800;
+                    this.setTargetRotation(this.getRotationForFace(faceId));
 
                     if (this.isComplete()) {
                         console.log("CUBE COMPLETE!");
-                        // Stay on the last face or do a victory spin
                     } else {
-                        // 2. GUIDE: Wait 2 seconds, then rotate to the NEXT face
+                        // DELAYED GUIDE: Wait for the pulse/confirmation before moving
                         if (this.nextMoveTimeout) clearTimeout(this.nextMoveTimeout);
                         
                         this.nextMoveTimeout = setTimeout(() => {
+                            this.rotationState.duration = 1500;
                             this.guideToNextFace();
-                        }, 2000); 
+                        }, this.rotationState.delayBeforeNext); 
                     }
                 }
             }
@@ -118,11 +134,69 @@ export class VirtualCube {
     }
 
 
+    animateScale() {
+        if (!this.scaleState.active) return;
+
+        const elapsed = Date.now() - this.scaleState.startTime;
+        const progress = Math.min(elapsed / this.scaleState.duration, 1);
+
+        // Sine wave for a smooth "up and down" pulse
+        // Math.sin goes from 0 to 1 back to 0 over PI
+        const pulse = Math.sin(progress * Math.PI);
+        const currentScale = this.scaleState.baseScale + (pulse * (this.scaleState.maxScale - this.scaleState.baseScale));
+        
+        this.cubeGroup.scale.set(currentScale, currentScale, currentScale);
+
+        if (progress === 1) {
+            this.scaleState.active = false;
+            this.cubeGroup.scale.set(1, 1, 1);
+        }
+    }
+
+
     animateRotation() {
-        const speed = 0.1;
-        this.cubeGroup.rotation.x += (this.targetRotation.x - this.cubeGroup.rotation.x) * speed;
-        this.cubeGroup.rotation.y += (this.targetRotation.y - this.cubeGroup.rotation.y) * speed;
-        this.cubeGroup.rotation.z += (this.targetRotation.z - this.cubeGroup.rotation.z) * speed;
+        if (!this.rotationState.active) return;
+
+        const elapsed = Date.now() - this.rotationState.startTime;
+        const progress = Math.min(elapsed / this.rotationState.duration, 1);
+
+        // Ease-out cubic function for a smooth finish
+        const ease = 1 - Math.pow(1 - progress, 3);
+
+        this.cubeGroup.rotation.x = this.rotationState.start.x + (this.rotationState.end.x - this.rotationState.start.x) * ease;
+        this.cubeGroup.rotation.y = this.rotationState.start.y + (this.rotationState.end.y - this.rotationState.start.y) * ease;
+        this.cubeGroup.rotation.z = this.rotationState.start.z + (this.rotationState.end.z - this.rotationState.start.z) * ease;
+
+        if (progress === 1) {
+            this.rotationState.active = false;
+        }
+    }
+
+
+    setTargetRotation(target) {
+        this.rotationState.start = {
+            x: this.cubeGroup.rotation.x,
+            y: this.cubeGroup.rotation.y,
+            z: this.cubeGroup.rotation.z
+        };
+        this.rotationState.end = target;
+        this.rotationState.startTime = Date.now();
+        this.rotationState.active = true;
+    }
+
+
+    guideToNextFace() {
+        const missing = this.getMissingFaces();
+        if (missing.length === 0) return;
+
+        // Suggested scanning order
+        const order = ['B', 'R', 'F', 'L', 'U', 'D'];
+        const next = order.find(f => missing.includes(f));
+        if (!next) return;
+
+        const target = this.getRotationForFace(next);
+        this.rotationState.duration = 1200; 
+        this.setTargetRotation(target);
     }
     
 
@@ -180,20 +254,6 @@ export class VirtualCube {
             case 'D': return { x: -Math.PI/2, y: 0, z: 0 }; 
         }
         return { x: 0, y: 0, z: 0 };
-    }
-
-
-    guideToNextFace() {
-        const missing = this.getMissingFaces();
-        if (missing.length === 0) return;
-
-        // Suggested scanning order
-        const order = ['B', 'R', 'F', 'L', 'U', 'D'];
-        const next = order.find(f => missing.includes(f));
-        if (!next) return;
-
-        console.log(`Rotating to request: ${next}`);
-        this.targetRotation = this.getRotationForFace(next);
     }
 
 
