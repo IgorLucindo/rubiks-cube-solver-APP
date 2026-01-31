@@ -6,6 +6,16 @@ export class VirtualCube {
             'blue': 'B', 'orange': 'L', 'red': 'R'
         };
 
+        const styles = getComputedStyle(document.documentElement);
+        this.cssColors = {
+            'white': styles.getPropertyValue('--cube-white').trim(),
+            'yellow': styles.getPropertyValue('--cube-yellow').trim(),
+            'green': styles.getPropertyValue('--cube-green').trim(),
+            'blue': styles.getPropertyValue('--cube-blue').trim(),
+            'orange': styles.getPropertyValue('--cube-orange').trim(),
+            'red': styles.getPropertyValue('--cube-red').trim()
+        };
+
         this.scaleState = {
             active: false,
             startTime: 0,
@@ -21,11 +31,13 @@ export class VirtualCube {
             end: { x: 0, y: 0, z: 0 },
             delayBeforeNext: 1200
         };
+
+        this.faceColor = Object.fromEntries(Object.entries(this.colorFace).map(([k, v]) => [v, k]));
         
-        this.scan_delay = 1000;
-        this.lastScanTime = 0;
         this.isScanning = true;
         this.nextMoveTimeout = null;
+        this.firstScanDone = false;
+        this.currentExpectedFaceId = null;
 
         // --- 3D RENDERER STATE ---
         this.container = document.getElementById('threeContainer');
@@ -36,7 +48,6 @@ export class VirtualCube {
         this.cubies = [];
 
         this.initThreeJS();
-        
         window.addEventListener('resize', () => this.handleResize());
     }
 
@@ -79,9 +90,8 @@ export class VirtualCube {
             }
         }
 
-        // Start showing Back face (or any default)
-        this.cubeGroup.rotation.y = Math.PI;
-
+        // Start facing Front (Green) by default
+        this.cubeGroup.rotation.y = 0; 
         this.handleResize();
     }
 
@@ -105,32 +115,72 @@ export class VirtualCube {
 
         if (!faceColors || !this.isScanning) return;
 
-        const now = Date.now();
-        if (now - this.lastScanTime > this.scan_delay) {
-            const faceId = this.addFace(faceColors);
-            if (faceId) {
-                this.lastScanTime = now;
-                this.update3DColors(faceId, faceColors);
+        const faceId = this.addFace(faceColors);
+        if (faceId) {
+            this.update3DColors(faceId, faceColors);
 
-                // Trigger animation
-                this.scaleState.active = true;
-                this.scaleState.startTime = Date.now();
-                this.rotationState.duration = 800;
-                this.setTargetRotation(this.getRotationForFace(faceId));
+            // Trigger pulse animation
+            this.scaleState.active = true;
+            this.scaleState.startTime = Date.now();
 
-                if (this.isComplete()) {
-                    console.log("CUBE COMPLETE!");
-                } else {
-                    // Wait for the pulse/confirmation before moving
-                    if (this.nextMoveTimeout) clearTimeout(this.nextMoveTimeout);
-                    
-                    this.nextMoveTimeout = setTimeout(() => {
-                        this.rotationState.duration = 1500;
-                        this.guideToNextFace();
-                    }, this.rotationState.delayBeforeNext); 
-                }
+            // If first scan
+            if (!this.firstScanDone) {
+                this.firstScanDone = true;
+                this.fillAllCenters();
+                const targetRot = this.getRotationForFace(faceId);
+                this.cubeGroup.rotation.set(targetRot.x, targetRot.y, targetRot.z);
+                this.currentExpectedFaceId = faceId;
+            }
+
+            if (this.isComplete()) {
+                console.log("CUBE COMPLETE!");
+                this.currentExpectedFaceId = null;
+            } else {
+                // Wait for the pulse/confirmation before moving
+                if (this.nextMoveTimeout) clearTimeout(this.nextMoveTimeout);
+                
+                this.nextMoveTimeout = setTimeout(() => {
+                    this.guideToNextFace();
+                }, this.rotationState.delayBeforeNext); 
             }
         }
+    }
+
+
+    fillAllCenters() {
+        const faceMap = {
+            'F': { axis: 'z', val: 1 }, 'B': { axis: 'z', val: -1 },
+            'U': { axis: 'y', val: 1 }, 'D': { axis: 'y', val: -1 },
+            'R': { axis: 'x', val: 1 }, 'L': { axis: 'x', val: -1 }
+        };
+        const materialIndexMap = { 'R': 0, 'L': 1, 'U': 2, 'D': 3, 'F': 4, 'B': 5 };
+
+        Object.entries(this.faceColor).forEach(([faceId, colorName]) => {
+            const target = faceMap[faceId];
+            const matIndex = materialIndexMap[faceId];
+            const colorStr = this.cssColors[colorName] || '#555555';
+
+            // Find the center cubie for this face
+            const centerCubie = this.cubies.find(c => {
+                if (c[target.axis] !== target.val) return false;
+                const otherAxes = ['x', 'y', 'z'].filter(a => a !== target.axis);
+                return c[otherAxes[0]] === 0 && c[otherAxes[1]] === 0;
+            });
+
+            if (centerCubie) {
+                centerCubie.mesh.material[matIndex].color.set(colorStr);
+                centerCubie.mesh.material[matIndex].opacity = 1.0;
+            }
+        });
+    }
+
+
+    getExpectedCenterColor() {
+        if (!this.firstScanDone) return null;
+        if (this.currentExpectedFaceId) {
+            return this.faceColor[this.currentExpectedFaceId];
+        }
+        return null;
     }
 
 
@@ -139,9 +189,6 @@ export class VirtualCube {
 
         const elapsed = Date.now() - this.scaleState.startTime;
         const progress = Math.min(elapsed / this.scaleState.duration, 1);
-
-        // Sine wave for a smooth "up and down" pulse
-        // Math.sin goes from 0 to 1 back to 0 over PI
         const pulse = Math.sin(progress * Math.PI);
         const currentScale = this.scaleState.baseScale + (pulse * (this.scaleState.maxScale - this.scaleState.baseScale));
         
@@ -159,8 +206,6 @@ export class VirtualCube {
 
         const elapsed = Date.now() - this.rotationState.startTime;
         const progress = Math.min(elapsed / this.rotationState.duration, 1);
-
-        // Ease-out cubic function for a smooth finish
         const ease = 1 - Math.pow(1 - progress, 3);
 
         this.cubeGroup.rotation.x = this.rotationState.start.x + (this.rotationState.end.x - this.rotationState.start.x) * ease;
@@ -189,13 +234,13 @@ export class VirtualCube {
         const missing = this.getMissingFaces();
         if (missing.length === 0) return;
 
-        // Suggested scanning order
-        const order = ['B', 'R', 'F', 'L', 'U', 'D'];
-        const next = order.find(f => missing.includes(f));
-        if (!next) return;
+        const order = ['F', 'R', 'B', 'L', 'U', 'D'];
+        let next = order.find(f => missing.includes(f));
+        if (!next) next = missing[0];
 
+        this.currentExpectedFaceId = next;
         const target = this.getRotationForFace(next);
-        this.rotationState.duration = 1200; 
+        this.rotationState.duration = 1500;
         this.setTargetRotation(target);
     }
     
@@ -236,14 +281,13 @@ export class VirtualCube {
         });
 
         faceCubies.forEach((cubie, i) => {
-            const hex = this.getHexColor(colors[i]);
-            cubie.mesh.material[matIndex].color.setHex(hex);
+            const colorStr = this.cssColors[colors[i]] || '#555555';
+            cubie.mesh.material[matIndex].color.set(colorStr);
             cubie.mesh.material[matIndex].opacity = 1.0; 
         });
     }
 
 
-    // Helper to get standard viewing rotation for a specific face
     getRotationForFace(faceId) {
         switch (faceId) {
             case 'F': return { x: 0, y: 0, z: 0 }; 
@@ -254,16 +298,6 @@ export class VirtualCube {
             case 'D': return { x: -Math.PI/2, y: 0, z: 0 }; 
         }
         return { x: 0, y: 0, z: 0 };
-    }
-
-
-    getHexColor(name) {
-        const palette = {
-            'white': 0xffffff, 'yellow': 0xffff00,
-            'green': 0x00aa00, 'blue': 0x0000ff,
-            'orange': 0xffa500, 'red': 0xff0000
-        };
-        return palette[name] || 0x555555;
     }
 
 

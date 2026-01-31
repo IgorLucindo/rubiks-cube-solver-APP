@@ -7,10 +7,14 @@ const virtualCube = new VirtualCube();
 
 
 function mainLoop() {
-    // Detects and return face colors of cube
-    const faceColors = videoCap.loop();
+    // Get State from Cube
+    const expectedColor = virtualCube.getExpectedCenterColor();
+    const isComplete = virtualCube.isComplete();
 
-    // Process face colors and construct virtual cube
+    // Pass State to Camera
+    const faceColors = videoCap.loop(expectedColor, isComplete);
+
+    // Update Cube Logic
     virtualCube.loop(faceColors);
 
     requestAnimationFrame(mainLoop);

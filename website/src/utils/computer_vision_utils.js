@@ -1,10 +1,3 @@
-export function applyContrast(mat, alpha, beta) {
-    // alpha: Contrast control (1.0-3.0)
-    // beta: Brightness control (0-100)
-    mat.convertTo(mat, -1, alpha, beta);
-}
-
-
 export function sortGridByPosition(rects) {
     // Sort by Vertical Position (Y)
     rects.sort((a, b) => a.cy - b.cy);
