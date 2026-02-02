@@ -7,9 +7,13 @@
     <title>Rubik's Cube Tutorial</title>
     <link rel="stylesheet" href="website/css/vars.css">
     <link rel="stylesheet" href="website/css/styles.css">
+    <link rel="stylesheet" href="website/css/camera.css">
+    <link rel="stylesheet" href="website/css/cube.css">
 </head>
 
 <body>
+    <button id="debugBtn" class="debug-btn">FORCE UNSOLVED CUBE</button>
+
     <p id="status">Hold cube with <b>WHITE</b> face on <b>BOTTOM</b>.<br>Scan ANY face to start.</p>
     
     <div class="app-layout">
@@ -17,6 +21,10 @@
             <h3>Camera Feed</h3>
             <video id="videoInput" width="640" height="480" autoplay playsinline style="display:none"></video>
             <canvas id="canvasOutput"></canvas>
+            <div id="cameraPlaceholder" style="display:none;">
+            <svg viewBox="0 0 24 24" width="80" height="80" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/><path d="M0 0h24v24H0z" fill="none"/></svg>
+            <span style="margin-top:10px; font-weight:bold; color:#555;">CAMERA OFF</span>
+        </div>
         </div>
 
         <div class="cube-container">

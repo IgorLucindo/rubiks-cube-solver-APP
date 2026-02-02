@@ -1,2 +1,1 @@
-- after completing the virtual cube, calculate solve moves
-- display solve movements in virtual cube when clicking forward step and backward step keys
+- add animations for stopping camera when completing scan

@@ -31,104 +31,12 @@ h3 {
     box-sizing: border-box;
 }
 
-.camera-container, .cube-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    max-width: 45%;
-    height: 100%;
-}
-
-canvas#canvasOutput, #threeContainer {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 4 / 3;
-    max-height: 80vh;
-    border: 2px solid #555;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    background: #000;
-    object-fit: contain;
-}
-
-#threeContainer {
-    position: relative;
-    overflow: hidden;
-    background: #1a1a1a;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: grab;
-}
-
 body.grabbing {
     cursor: grabbing;
 }
 
 body.grabbing #threeContainer {
     cursor: grabbing;
-}
-
-#threeContainer canvas {
-    width: 100%;
-    height: 100%;
-    outline: none;
-    display: block;
-}
-
-.controls {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    gap: 0;
-    z-index: 10;
-}
-
-.controls button {
-    flex: 1;
-    background: rgba(255, 255, 255, 0);
-    backdrop-filter: blur(5px);
-    border: none;
-    border-radius: 0;
-    color: rgba(255, 255, 255, 0.9);
-    padding: 0.7rem 0;
-    font-size: 1rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    cursor: pointer;
-    box-shadow: none;
-    transition: all 0.3s ease;
-}
-
-.controls button:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    transform: none;
-}
-
-.controls button:active {
-    background: rgba(255, 255, 255, 0.3);
-}
-
-.controls button:first-child {
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-#solutionText {
-    text-align: center;
-    margin-top: 15px;
-    font-size: 1.2rem;
-    color: var(--cube-green);
-    font-weight: bold;
-    min-height: 1.5em;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-    letter-spacing: 0.5px;
 }
 
 #status {
@@ -141,6 +49,16 @@ body.grabbing #threeContainer {
     font-size: 1em;
 }
 
-video {
+.debug-btn {
     display: none;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 9999;
+    padding: 10px 20px;
+    background: #ff3333;
+    color: white;
+    border: 2px solid white;
+    font-weight: bold;
+    cursor: pointer;
 }

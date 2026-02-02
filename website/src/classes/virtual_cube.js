@@ -2,8 +2,7 @@ import { getSolverMoves } from "../utils/solver_utils.js";
 
 
 export class VirtualCube {
-    constructor(cfg) {
-        this.cfg = cfg;
+    constructor() {
         this.container = document.getElementById('threeContainer');
         this.cubeState = { U: null, D: null, F: null, B: null, L: null, R: null };
         
@@ -300,6 +299,7 @@ export class VirtualCube {
         return faceId;
     }
 
+
     update3DColors(faceId, colors) {
         const faceMap = {
             'F': { axis: 'z', val: 1 },  'B': { axis: 'z', val: -1 },
@@ -386,6 +386,24 @@ export class VirtualCube {
             const status = document.getElementById('status');
             if (status) status.innerHTML = moves?.error || "Solver Error.";
         }
+    }
+
+
+    forceUnsolvedState() {
+        if (!this.orientationLocked) this.orientationLocked = true;
+        const faces = ['U', 'D', 'F', 'B', 'L', 'R'];
+        faces.forEach(f => this.cubeState[f] = Array(9).fill(f));
+        const topIndices = [0, 1, 2];
+        topIndices.forEach(i => {
+            this.cubeState['F'][i] = 'R'; 
+            this.cubeState['R'][i] = 'B';
+            this.cubeState['B'][i] = 'L';
+            this.cubeState['L'][i] = 'F';
+        });
+        faces.forEach(faceId => {
+            const visualColors = this.cubeState[faceId].map(id => this.faceColor[id]);
+            this.update3DColors(faceId, visualColors);
+        });
     }
 
 

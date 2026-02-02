@@ -2,9 +2,8 @@ import { sortGridByPosition, getAverageColor, classifyColor } from "../utils/com
 
 
 export class VideoCapture {
-    constructor(videoId, canvasId) {
-        this.video = document.getElementById(videoId);
-        this.canvasId = canvasId;
+    constructor() {
+        this.video = document.getElementById('videoInput');
 
         const styles = getComputedStyle(document.documentElement);
         this.cssColors = {
@@ -122,8 +121,10 @@ export class VideoCapture {
 
             // Render
             this.renderFaceHighlight();
-            cv.imshow(this.canvasId, this.dst);
+            cv.imshow('canvasOutput', this.dst);
             this.updateStatusText(expectedCenterColor, isComplete);
+
+            this.handleCompletion(isComplete);
 
             return faceColors;
 
@@ -392,5 +393,23 @@ export class VideoCapture {
             const cssColor = this.cssColors[expectedColor] || '#ffffff';
             statusDiv.innerHTML = `Rotate to <b style="color:${cssColor}">${expectedColor.toUpperCase()}</b> side.<br>Match the screen.`;
         }
+    }
+
+
+    handleCompletion(isComplete) {
+        if (!isComplete) return;
+
+        this.isReady = false;
+
+        // Stop capture
+        if (this.video.srcObject) {
+            const tracks = this.video.srcObject.getTracks();
+            tracks.forEach(track => track.stop());
+            this.video.srcObject = null;
+        }
+
+        // Change camera container
+        document.getElementById('canvasOutput').style.display = 'none';
+        document.getElementById('cameraPlaceholder').style.display = 'flex';
     }
 }

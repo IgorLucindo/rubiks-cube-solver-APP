@@ -1,0 +1,38 @@
+.camera-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    max-width: 45%;
+    height: 100%;
+}
+
+canvas#canvasOutput{
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    max-height: 80vh;
+    border: 2px solid #555;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    background: #1a1a1a;
+    object-fit: contain;
+}
+
+video {
+    display: none;
+}
+
+#cameraPlaceholder {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    max-height: 80vh;
+    background: #1a1a1a;
+    border: 2px solid #555;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #444;
+}

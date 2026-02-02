@@ -1,11 +1,10 @@
 import { VideoCapture } from "./classes/video_capture.js";
 import { VirtualCube } from "./classes/virtual_cube.js";
 
-const cfg = {
-    debug: true
-}
-const videoCap = new VideoCapture('videoInput', 'canvasOutput');
-const virtualCube = new VirtualCube(cfg);
+
+const DEBUG = true;
+const videoCap = new VideoCapture();
+const virtualCube = new VirtualCube();
 
 
 function mainLoop() {
@@ -42,3 +41,12 @@ document.getElementById('prevBtn').addEventListener('click', () => {
     const move = virtualCube.prevMove();
     if (move) document.getElementById('solutionText').innerText = `Back to: ${move}`;
 });
+if (DEBUG) {
+    const btn = document.getElementById('debugBtn');
+    if (btn) {
+        btn.style.display = 'block';
+        btn.addEventListener('click', () => {
+            virtualCube.forceUnsolvedState();
+        });
+    }
+}
