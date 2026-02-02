@@ -23,12 +23,7 @@ function mainLoop() {
 // Startup Sequence
 window.cvReady.then(() => {
     console.log("OpenCV Ready. Initializing...");
-    videoCap.start().then(() => {
-        console.log("Camera Started. Beginning Global Loop.");
-        mainLoop();
-    }).catch(err => {
-        console.error("Failed to start camera:", err);
-    });
+    mainLoop();
 });
 
 // UI Listeners for the solution buttons still live here
