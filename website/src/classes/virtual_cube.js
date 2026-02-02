@@ -2,7 +2,8 @@ import { getSolverMoves } from "../utils/solver_utils.js";
 
 
 export class VirtualCube {
-    constructor() {
+    constructor(cfg) {
+        this.cfg = cfg;
         this.container = document.getElementById('threeContainer');
         this.cubeState = { U: null, D: null, F: null, B: null, L: null, R: null };
         
@@ -17,15 +18,12 @@ export class VirtualCube {
         this.faceColor = Object.fromEntries(Object.entries(this.colorFace).map(([k, v]) => [v, k]));
 
         this.opposites = {
-            'green': 'blue', 'blue': 'green',
-            'red': 'orange', 'orange': 'red',
-            'white': 'yellow', 'yellow': 'white'
+            'green': 'blue', 'blue': 'green', 'red': 'orange',
+            'orange': 'red', 'white': 'yellow', 'yellow': 'white'
         };
         this.standardRight = {
-            'green': 'orange',
-            'orange': 'blue',
-            'blue': 'red',
-            'red': 'green'
+            'green': 'orange', 'orange': 'blue',
+            'blue': 'red', 'red': 'green'
         };
 
         const styles = getComputedStyle(document.documentElement);
@@ -60,7 +58,6 @@ export class VirtualCube {
             sensitivity: 0.005
         };
 
-        // Scanning State
         this.isScanning = true;
         this.nextMoveTimeout = null;
         this.firstScanDone = false;
@@ -68,7 +65,6 @@ export class VirtualCube {
         this.lastScannedFaceId = 'F'; 
         this.currentScanRotation = 0; 
         this.orientationLocked = false;
-        
         this.scanOrder = [];
         this.solutionMoves = [];
         this.currentMoveIdx = -1;

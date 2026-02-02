@@ -1,9 +1,11 @@
 import { VideoCapture } from "./classes/video_capture.js";
 import { VirtualCube } from "./classes/virtual_cube.js";
 
-
+const cfg = {
+    debug: true
+}
 const videoCap = new VideoCapture('videoInput', 'canvasOutput');
-const virtualCube = new VirtualCube();
+const virtualCube = new VirtualCube(cfg);
 
 
 function mainLoop() {
