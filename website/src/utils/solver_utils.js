@@ -1,5 +1,4 @@
 export function getSolverMoves(cubeState) {
-    // --- STEP 1: VALIDATION ---
     const validationError = validateState(cubeState);
     if (validationError) {
         console.warn(validationError);
@@ -48,9 +47,10 @@ export function getSolverMoves(cubeState) {
     }
 }
 
+
 function validateState(cubeState) {
     const counts = {};
-    const colors = ['F', 'R', 'U', 'D', 'L', 'B']; // Using Face IDs as proxy for colors
+    const colors = ['F', 'R', 'U', 'D', 'L', 'B'];
 
     // Initialize counts
     colors.forEach(c => counts[c] = 0);
@@ -70,5 +70,5 @@ function validateState(cubeState) {
             return `Scan Error: Found ${counts[color]} ${map[color]} stickers (need 9).`;
         }
     }
-    return null; // No errors
+    return null;
 }

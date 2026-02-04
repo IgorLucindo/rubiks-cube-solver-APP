@@ -34,16 +34,7 @@ window.cvReady.then(() => {
         });
 });
 
-// UI Listeners for the solution buttons still live here
-document.getElementById('nextBtn').addEventListener('click', () => {
-    const move = virtualCube.nextMove();
-    if (move) document.getElementById('solutionText').innerText = `Move: ${move}`;
-    else if (virtualCube.isSolvedMode) document.getElementById('solutionText').innerText = "Solved!";
-});
-document.getElementById('prevBtn').addEventListener('click', () => {
-    const move = virtualCube.prevMove();
-    if (move) document.getElementById('solutionText').innerText = `Back to: ${move}`;
-});
+// Debug menu
 if (DEBUG) {
     const btn = document.getElementById('debugBtn');
     if (btn) {

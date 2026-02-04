@@ -79,6 +79,9 @@ export class VirtualCube {
         this.initThreeJS();
         this.initMouseControls();
         window.addEventListener('resize', () => this.handleResize());
+        
+        window._prevMove = () => this.prevMove();
+        window._nextMove = () => this.nextMove();
     }
 
 
@@ -378,6 +381,7 @@ export class VirtualCube {
 
         if (moves && !moves.error) {
             this.setSolution(moves.moves);
+            console.log(this.solutionMoves)
             const controls = document.getElementById('solutionControls');
             const status = document.getElementById('status');
             if (controls) controls.style.display = 'flex';
@@ -477,20 +481,18 @@ export class VirtualCube {
     
 
     nextMove() {
-        if (this.currentMoveIdx >= this.solutionMoves.length - 1) return null;
+        if (this.currentMoveIdx >= this.solutionMoves.length - 1) return;
         this.currentMoveIdx++;
         const move = this.solutionMoves[this.currentMoveIdx];
         this.performMove(move);
-        return move;
     }
 
 
     prevMove() {
-        if (this.currentMoveIdx < 0) return null;
+        if (this.currentMoveIdx < 0) return;
         const move = this.solutionMoves[this.currentMoveIdx];
         this.currentMoveIdx--;
         this.performMove(this.invertMove(move));
-        return this.solutionMoves[this.currentMoveIdx] || "Start";
     }
 
 
