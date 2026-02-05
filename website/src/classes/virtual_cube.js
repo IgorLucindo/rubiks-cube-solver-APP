@@ -381,7 +381,6 @@ export class VirtualCube {
 
         if (moves && !moves.error) {
             this.setSolution(moves.moves);
-            console.log(this.solutionMoves)
             const controls = document.getElementById('solutionControls');
             const status = document.getElementById('status');
             if (controls) controls.style.display = 'flex';

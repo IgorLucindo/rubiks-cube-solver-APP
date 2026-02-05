@@ -32,12 +32,25 @@ export function getSolverMoves(cubeState) {
         // 'partitioned: true' gives us the CFOP stages
         const result = window.rubiksCubeSolver(cubeString, { partitioned: true });
         
-        const moves = [
-            ...result.cross, 
-            ...result.f2l, 
-            ...result.oll, 
-            ...result.pll
+        // Collect all parts
+        const parts = [
+            result.cross, 
+            result.f2l, 
+            result.oll, 
+            result.pll
         ];
+
+        // Flatten into one giant space-separated string
+        let allMovesRaw = parts.map(part => {
+            if (Array.isArray(part)) return part.join(' ');
+            return part || '';
+        }).join(' ');
+
+        // Clean up the string
+        const moves = allMovesRaw
+            .replace(/prime/g, "'") 
+            .split(/\s+/)
+            .filter(m => m.trim().length > 0);
 
         return { moves: moves };
 
