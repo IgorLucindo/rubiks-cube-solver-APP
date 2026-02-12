@@ -10,6 +10,7 @@ The application features an interactive interface that guides users through the 
 
 * **Real-Time Scanning:** Detects and extracts cube face colors via webcam using **OpenCV**.
 * **3D Digital Twin:** Renders a fully interactive **Virtual Cube** using **Three.js** that mirrors the physical state.
+* **CFOP Solver:** Generates a layer-by-layer solution (Cross, F2L, OLL, PLL) using the advanced CFOP method.
 * **Smart Color Classification:** Uses Euclidean distance algorithms to accurately identify sticker colors under varying lighting.
 * **Interactive Guidance:** Automatically rotates the 3D model to guide the user on which face to scan next.
 * **Responsive Design:** Side-by-side layout optimized for both desktop and mobile devices.
@@ -20,6 +21,7 @@ This project is built using modern web technologies and powerful libraries locat
 
 * **OpenCV.js:** For video capture, contour detection, and image processing.
 * **Three.js:** For rendering the 3D virtual cube and handling animations.
+* **Rubik's Cube Solver:** For generating the CFOP solution algorithm.
 * **Vanilla JavaScript (ES6+):** For state management and application logic.
 
 ## 📝 How it works
@@ -28,6 +30,7 @@ This project is built using modern web technologies and powerful libraries locat
 * **Filtering:** It applies geometric constraints (area, aspect ratio, convexity) to filter out noise and identify the 9 stickers of a cube face.
 * **Color Mapping:** It calculates the average RGB color of each sticker and classifies it into one of the 6 standard cube colors (White, Yellow, Green, Blue, Red, Orange).
 * **State Synchronization:** The detected colors are mapped to a 3D internal state, updating the virtual cube's textures in real-time.
+* **Solving:** Once all faces are scanned, the internal state is passed to the solver, which returns the move sequence required to solve the cube.
 
 ## 🚀 Interactive App
 

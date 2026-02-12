@@ -56,6 +56,15 @@ export class VirtualCube {
             previous: { x: 0, y: 0 },
             sensitivity: 0.005
         };
+        this.moveAnim = {
+            active: false,
+            startTime: 0,
+            duration: 400, // ms
+            cubies: [],
+            axis: null,
+            totalAngle: 0,
+            accumulated: 0
+        };
 
         this.isScanning = true;
         this.nextMoveTimeout = null;
@@ -191,6 +200,7 @@ export class VirtualCube {
     loop(faceColors) {
         this.animateScale();
         this.animateRotation();
+        this.updateMoveAnimation();
         this.renderer.render(this.scene, this.camera);
         this.handleCompletion();
 
@@ -470,28 +480,122 @@ export class VirtualCube {
     }
 
 
+    updateMoveAnimation() {
+        if (!this.moveAnim.active) return;
+
+        const now = Date.now();
+        const elapsed = now - this.moveAnim.startTime;
+        let progress = elapsed / this.moveAnim.duration;
+        
+        if (progress >= 1) {
+            progress = 1;
+            this.moveAnim.active = false;
+        }
+
+        // Easing function
+        const ease = t => t * (2 - t);
+        
+        // Calculate incremental rotation
+        const currentTargetAngle = this.moveAnim.totalAngle * ease(progress);
+        const delta = currentTargetAngle - this.moveAnim.accumulated;
+        
+        this.moveAnim.cubies.forEach(cubie => {
+            cubie.mesh.position.applyAxisAngle(this.moveAnim.axis, delta);
+            cubie.mesh.rotateOnWorldAxis(this.moveAnim.axis, delta);
+        });
+
+        this.moveAnim.accumulated = currentTargetAngle;
+
+        // Cleanup on Finish
+        if (!this.moveAnim.active) {
+            this.finalizeMove();
+        }
+    }
+
+
+    finalizeMove() {
+        this.moveAnim.cubies.forEach(cubie => {
+            // Snap visual position to integer grid to prevent drift
+            cubie.mesh.position.x = Math.round(cubie.mesh.position.x);
+            cubie.mesh.position.y = Math.round(cubie.mesh.position.y);
+            cubie.mesh.position.z = Math.round(cubie.mesh.position.z);
+            
+            // Sync logical coordinates
+            cubie.x = Math.round(cubie.mesh.position.x);
+            cubie.y = Math.round(cubie.mesh.position.y);
+            cubie.z = Math.round(cubie.mesh.position.z);
+        });
+    }
+
+
+    animateMove(move) {
+        if (this.moveAnim.active) return;
+
+        let face = move[0];
+        let modifier = move.substring(1);
+        let isDouble = modifier === "2";
+        let clockwise = modifier !== "'";
+
+        // Calculate Angle
+        let angle = Math.PI / 2;
+        if (face === 'R' || face === 'U' || face === 'F') angle *= -1;
+        if (!clockwise) angle *= -1;
+        if (isDouble) angle *= 2;
+
+        // Select Cubies
+        const filters = {
+            'R': c => c.x > 0.1,  'L': c => c.x < -0.1,
+            'U': c => c.y > 0.1,  'D': c => c.y < -0.1,
+            'F': c => c.z > 0.1,  'B': c => c.z < -0.1
+        };
+        const activeCubies = this.cubies.filter(filters[face]);
+
+        // Select Axis
+        const axes = {
+            'R': new THREE.Vector3(1, 0, 0), 'L': new THREE.Vector3(1, 0, 0),
+            'U': new THREE.Vector3(0, 1, 0), 'D': new THREE.Vector3(0, 1, 0),
+            'F': new THREE.Vector3(0, 0, 1), 'B': new THREE.Vector3(0, 0, 1)
+        };
+
+        // Start Animation
+        this.moveAnim = {
+            active: true,
+            startTime: Date.now(),
+            duration: 400,
+            cubies: activeCubies,
+            axis: axes[face],
+            totalAngle: angle,
+            accumulated: 0
+        };
+    }
+
+
     getExpectedCenterColor() {
         if (!this.firstScanDone || !this.currentExpectedFaceId) return null;
         return this.faceColor[this.currentExpectedFaceId];
     }
 
 
-    setSolution(moves) { this.solutionMoves = moves; this.currentMoveIdx = -1; }
+    setSolution(moves) {
+        this.solutionMoves = moves; this.currentMoveIdx = -1;
+    }
     
 
     nextMove() {
-        if (this.currentMoveIdx >= this.solutionMoves.length - 1) return;
+        if (this.moveAnim.active || this.currentMoveIdx >= this.solutionMoves.length - 1) return;
+
         this.currentMoveIdx++;
         const move = this.solutionMoves[this.currentMoveIdx];
-        this.performMove(move);
+        this.animateMove(move);
     }
 
 
     prevMove() {
-        if (this.currentMoveIdx < 0) return;
+        if (this.moveAnim.active || this.currentMoveIdx < 0) return;
+        
         const move = this.solutionMoves[this.currentMoveIdx];
         this.currentMoveIdx--;
-        this.performMove(this.invertMove(move));
+        this.animateMove(this.invertMove(move));
     }
 
 
@@ -499,15 +603,6 @@ export class VirtualCube {
         if (move.includes("'")) return move.replace("'", "");
         if (move.includes("2")) return move;
         return move + "'";
-    }
-
-
-    performMove(move) {
-        let face = move[0];
-        let modifier = move.substring(1);
-        let times = modifier === "2" ? 2 : 1;
-        let clockwise = modifier !== "'";
-        for (let i = 0; i < times; i++) this.rotateLayer(face, clockwise);
     }
 
 
