@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Rubik's Cube Tutorial</title>
+    <link rel="icon" href="website/assets/images/cube_icon.png">
     <link rel="stylesheet" href="website/css/vars.css">
+    <link rel="stylesheet" href="website/css/header.css">
     <link rel="stylesheet" href="website/css/styles.css">
     <link rel="stylesheet" href="website/css/camera.css">
     <link rel="stylesheet" href="website/css/cube.css">
@@ -15,21 +17,29 @@
     <button id="forceCubeBtn" class="debug-btn">FORCE UNSOLVED CUBE</button>
     <button id="autoSolveBtn" class="debug-btn" style="top: 70px;">AUTO SOLVE</button>
 
+    <header class="app-header">
+        <h1>Rubik's Cube Tutorial</h1>
+    </header>
+
     <p id="status">Hold cube with <b>WHITE</b> face on <b>BOTTOM</b>.<br>Scan ANY face to start.</p>
     
     <div class="app-layout">
         <div class="camera-container">
             <h3>Camera Feed</h3>
-            <video id="videoInput" width="640" height="480" autoplay playsinline style="display:none"></video>
-            <canvas id="canvasOutput"></canvas>
-            <div id="cameraPlaceholder" style="display:none;">
-            <svg viewBox="0 0 24 24" width="80" height="80" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/><path d="M0 0h24v24H0z" fill="none"/></svg>
-            <span style="margin-top:10px; font-weight:bold; color:#555;">CAMERA OFF</span>
-        </div>
+            
+            <div id="cameraWrapper" class="camera-wrapper">
+                <div id="cameraPlaceholder" class="placeholder-content">
+                    <svg viewBox="0 0 24 24" width="80" height="80" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/><path d="M0 0h24v24H0z" fill="none"/></svg>
+                    <span style="margin-top:10px; font-weight:bold; color:#555;">CAMERA OFF</span>
+                </div>
+                <video id="videoInput" width="640" height="480" autoplay playsinline style="display:none;"></video>
+                <canvas id="canvasOutput"></canvas>
+            </div>
         </div>
 
         <div class="cube-container">
             <h3>Virtual Cube</h3>
+
             <div id="threeContainer">
                 <div class="rotate-icon" title="Drag to Rotate">
                     <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
@@ -42,9 +52,16 @@
         </div>
     </div>
 
+    <p class="copyright">
+        © <span id="currentYear"></span> Developed by <a href="https://www.linkedin.com/in/igorlucindo/" target="_blank">Igor Cardoso</a>
+    </p>
+
     <!-- Scripts -->
     <script>
         window.cvReady = new Promise((resolve) => {window._onOpenCvReady = resolve;});
+    </script>
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/rubiks-cube-solver@1.2.0/lib/index.common.min.js"></script>

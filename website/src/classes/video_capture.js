@@ -35,6 +35,7 @@ export class VideoCapture {
         
         this.stickerMemory = Array.from({ length: 9 }, () => []);
         this.isReady = false;
+        this.isStopping = false;
         this.scanCooldown = 2000;
         this.lastSuccessTime = 0;
 
@@ -314,12 +315,16 @@ export class VideoCapture {
 
     
     validateExpectedFace(centerColor, expectedColor) {
-        if (!expectedColor || centerColor === null || centerColor === expectedColor) {
+        // First Scan Check: Block White and Yellow
+        if (!expectedColor) {
+            if (centerColor === 'white' || centerColor === 'yellow') return false;
+            this.animationState.statusMessage = '';
             return true;
         }
 
-        // Set warning if it is not the expected face
-        this.animationState.statusMessage = `SHOW ${expectedColor.toUpperCase()} FACE`;
+        // Subsequent Scans
+        if (centerColor === null || centerColor === expectedColor) return true;
+
         return false;
     }
 
@@ -388,7 +393,7 @@ export class VideoCapture {
             return;
         }
 
-        // Guidance (Strict Mode)
+        // Guidance
         if (expectedColor) {
             const cssColor = this.cssColors[expectedColor] || '#ffffff';
             statusDiv.innerHTML = `Rotate to <b style="color:${cssColor}">${expectedColor.toUpperCase()}</b> side.<br>Match the screen.`;
@@ -397,19 +402,23 @@ export class VideoCapture {
 
 
     handleCompletion(isComplete) {
-        if (!isComplete) return;
+        if (!isComplete || this.isStopping) return;
 
-        this.isReady = false;
+        this.isStopping = true;
+        const canvas = document.getElementById('canvasOutput');
+        canvas.classList.add('tv-off');
 
-        // Stop capture
-        if (this.video.srcObject) {
-            const tracks = this.video.srcObject.getTracks();
-            tracks.forEach(track => track.stop());
-            this.video.srcObject = null;
-        }
+        setTimeout(() => {
+            this.isReady = false;
+            if (this.video.srcObject) {
+                const tracks = this.video.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+                this.video.srcObject = null;
+            }
+            canvas.style.display = 'none';
+            canvas.classList.remove('tv-off');
+            this.isStopping = false;
 
-        // Change camera container
-        document.getElementById('canvasOutput').style.display = 'none';
-        document.getElementById('cameraPlaceholder').style.display = 'flex';
+        }, 600);
     }
 }

@@ -16,15 +16,6 @@ export class VirtualCube {
         };
         this.faceColor = Object.fromEntries(Object.entries(this.colorFace).map(([k, v]) => [v, k]));
 
-        this.opposites = {
-            'green': 'blue', 'blue': 'green', 'red': 'orange',
-            'orange': 'red', 'white': 'yellow', 'yellow': 'white'
-        };
-        this.standardRight = {
-            'green': 'orange', 'orange': 'blue',
-            'blue': 'red', 'red': 'green'
-        };
-
         const styles = getComputedStyle(document.documentElement);
         this.cssColors = {
             'white': styles.getPropertyValue('--cube-white').trim(),
@@ -59,7 +50,7 @@ export class VirtualCube {
         this.moveAnim = {
             active: false,
             startTime: 0,
-            duration: 400, // ms
+            duration: 400,
             cubies: [],
             axis: null,
             totalAngle: 0,
@@ -70,9 +61,8 @@ export class VirtualCube {
         this.nextMoveTimeout = null;
         this.firstScanDone = false;
         this.currentExpectedFaceId = null;
-        this.lastScannedFaceId = 'F'; 
+        this.lastScannedFaceId = null; 
         this.currentScanRotation = 0; 
-        this.orientationLocked = false;
         this.scanOrder = [];
         this.solutionMoves = [];
         this.currentMoveIdx = -1;
@@ -208,6 +198,7 @@ export class VirtualCube {
         if (!faceColors || !this.isScanning) return;
 
         const faceId = this.addFace(faceColors);
+        
         if (faceId) {
             const storedColors = this.cubeState[faceId].map(c => this.faceColor[c]);
             this.update3DColors(faceId, storedColors);
@@ -217,10 +208,10 @@ export class VirtualCube {
 
             if (!this.firstScanDone) {
                 this.firstScanDone = true;
-                this.fillAllCenters();
                 const targetRot = this.getRotationForFace(faceId);
                 this.cubeGroup.rotation.set(targetRot.x, targetRot.y, targetRot.z);
                 this.currentExpectedFaceId = faceId;
+                this.fillAllCenters();
             }
 
             if (!this.isComplete()) {
@@ -251,6 +242,7 @@ export class VirtualCube {
                 for (let i = 1; i <= 3; i++) this.scanOrder.push(ring[(idx + i) % 4]);
                 this.scanOrder.push('U', 'D');
             } else {
+                // Fallback if they somehow started with U/D (should be blocked now)
                 this.scanOrder = ['F', 'R', 'B', 'L', 'U', 'D'].filter(f => f !== startFace);
             }
         }
@@ -290,24 +282,16 @@ export class VirtualCube {
 
     addFace(faceColors) {
         const centerColor = faceColors[4];
+        const faceId = this.colorFace[centerColor];
 
-        if (!this.orientationLocked) {
-            this.colorFace[centerColor] = 'F';
-            const rightColor = this.standardRight[centerColor];
-            if (rightColor) {
-                this.colorFace[rightColor] = 'R';
-                const backColor = this.opposites[centerColor];
-                const leftColor = this.opposites[rightColor];
-                this.colorFace[backColor] = 'B';
-                this.colorFace[leftColor] = 'L';
-            }
-            this.orientationLocked = true;
-            this.faceColor = Object.fromEntries(Object.entries(this.colorFace).map(([k, v]) => [v, k]));
+        if (!faceId) return null;
+        if (!this.firstScanDone && (faceId === 'U' || faceId === 'D')) {
+            console.warn("Please start with a side face (Green, Red, Blue, Orange).");
+            return null;
         }
 
         const normalizedColors = this._rotateGrid(faceColors, -this.currentScanRotation);
         const stickers = normalizedColors.map(color => this.colorFace[color]);
-        const faceId = stickers[4];
         this.cubeState[faceId] = stickers;
         this.lastScannedFaceId = faceId;
         return faceId;
@@ -321,33 +305,25 @@ export class VirtualCube {
             'R': { axis: 'x', val: 1 },  'L': { axis: 'x', val: -1 }
         };
         const matIdxMap = { 'R': 0, 'L': 1, 'U': 2, 'D': 3, 'F': 4, 'B': 5 };
+        const sortRules = {
+            'F': (a, b) => (b.y - a.y) || (a.x - b.x),
+            'B': (a, b) => (b.y - a.y) || (b.x - a.x),
+            'R': (a, b) => (b.y - a.y) || (b.z - a.z),
+            'L': (a, b) => (b.y - a.y) || (a.z - b.z),
+            'U': (a, b) => (a.z - b.z) || (a.x - b.x),
+            'D': (a, b) => (b.z - a.z) || (a.x - b.x)
+        };
 
         const target = faceMap[faceId];
-        const matIndex = matIdxMap[faceId];
         if (!target) return;
 
-        let faceCubies = this.cubies.filter(c => c[target.axis] === target.val);
-        
-        faceCubies.sort((a, b) => {
-            if (['F', 'B', 'L', 'R'].includes(faceId)) {
-                if (Math.abs(b.y - a.y) > 0.1) return b.y - a.y; 
-            }
+        // Filter and Sort
+        const faceCubies = this.cubies
+            .filter(c => c[target.axis] === target.val)
+            .sort(sortRules[faceId]);
 
-            switch (faceId) {
-                case 'U': 
-                    if (Math.abs(a.z - b.z) > 0.1) return a.z - b.z;
-                    return a.x - b.x;
-                case 'D':
-                    if (Math.abs(b.z - a.z) > 0.1) return b.z - a.z;
-                    return a.x - b.x;
-                case 'F': return a.x - b.x; 
-                case 'B': return b.x - a.x; 
-                case 'R': return b.z - a.z; 
-                case 'L': return a.z - b.z; 
-                default: return 0;
-            }
-        });
-
+        // Apply Colors
+        const matIndex = matIdxMap[faceId];
         faceCubies.forEach((cubie, i) => {
             const colorStr = this.cssColors[colors[i]] || '#555555';
             cubie.mesh.material[matIndex].color.set(colorStr);
@@ -406,22 +382,31 @@ export class VirtualCube {
         this.solutionMoves = [];
         this.currentMoveIdx = -1;
 
-        if (!this.orientationLocked) this.orientationLocked = true;
-        
-        // Reset to solved state first
-        const faces = ['U', 'D', 'F', 'B', 'L', 'R'];
-        faces.forEach(f => this.cubeState[f] = Array(9).fill(f));
+        // Reset geometry
+        let idx = 0;
+        for (let x = -1; x <= 1; x++) {
+            for (let y = -1; y <= 1; y++) {
+                for (let z = -1; z <= 1; z++) {
+                    const cubie = this.cubies[idx++];
+                    cubie.mesh.position.set(x, y, z);
+                    cubie.mesh.rotation.set(0, 0, 0);
+                    cubie.x = x; cubie.y = y; cubie.z = z;
+                }
+            }
+        }
 
-        // Define a simple valid scramble (e.g., U and F moves)
-        // This uses the actual rotation logic to ensure the cube stays "possible"
-        this.rotateLayer('U', true); 
-        // this.rotateLayer('F', true);
+        // Define cube state
+        this.cubeState = {
+            'U': ['D', 'D', 'D', 'U', 'U', 'U', 'U', 'U', 'U'], 
+            'D': ['D', 'D', 'D', 'D', 'D', 'D', 'U', 'U', 'U'],
+            'F': ['F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F'],
+            'R': ['R', 'R', 'L', 'R', 'R', 'L', 'R', 'R', 'L'],
+            'B': ['B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B'],
+            'L': ['R', 'L', 'L', 'R', 'L', 'L', 'R', 'L', 'L']
+        };
 
-        // Update the logical cubeState to match the new visual state
-        // (This part requires a helper to sync the 3D cubie colors back to this.cubeState)
-        // this.syncCubeStateFromVisuals();
-
-        faces.forEach(faceId => {
+        // Render
+        Object.keys(this.cubeState).forEach(faceId => {
             const visualColors = this.cubeState[faceId].map(id => this.faceColor[id]);
             this.update3DColors(faceId, visualColors);
         });
@@ -433,7 +418,6 @@ export class VirtualCube {
         this.isAutoSolving = true;
 
         const interval = setInterval(() => {
-            // Stop if we reached the end or if user manually forced a reset (clearing moves)
             if (this.currentMoveIdx >= this.solutionMoves.length - 1 || this.solutionMoves.length === 0) {
                 clearInterval(interval);
                 this.isAutoSolving = false;
@@ -520,10 +504,7 @@ export class VirtualCube {
             this.moveAnim.active = false;
         }
 
-        // Easing function
         const ease = t => t * (2 - t);
-        
-        // Calculate incremental rotation
         const currentTargetAngle = this.moveAnim.totalAngle * ease(progress);
         const delta = currentTargetAngle - this.moveAnim.accumulated;
         
@@ -534,7 +515,6 @@ export class VirtualCube {
 
         this.moveAnim.accumulated = currentTargetAngle;
 
-        // Cleanup on Finish
         if (!this.moveAnim.active) {
             this.finalizeMove();
         }
@@ -543,12 +523,10 @@ export class VirtualCube {
 
     finalizeMove() {
         this.moveAnim.cubies.forEach(cubie => {
-            // Snap visual position to integer grid to prevent drift
             cubie.mesh.position.x = Math.round(cubie.mesh.position.x);
             cubie.mesh.position.y = Math.round(cubie.mesh.position.y);
             cubie.mesh.position.z = Math.round(cubie.mesh.position.z);
             
-            // Sync logical coordinates
             cubie.x = Math.round(cubie.mesh.position.x);
             cubie.y = Math.round(cubie.mesh.position.y);
             cubie.z = Math.round(cubie.mesh.position.z);
@@ -559,7 +537,6 @@ export class VirtualCube {
     animateMove(move) {
         if (this.moveAnim.active) return;
 
-        // Parse Move
         let modifier = "";
         if (move.endsWith("'")) modifier = "'";
         else if (move.endsWith("2")) modifier = "2";
@@ -569,7 +546,6 @@ export class VirtualCube {
         let isDouble = modifier === "2";
         let clockwise = modifier !== "'";
 
-        // Move Logic: Axis, Filter, Direction
         const moveDefinitions = {
             'R': { axis: 'x', filter: c => c.x > 0.1,  angle: -1 },
             'L': { axis: 'x', filter: c => c.x < -0.1, angle: 1 },
@@ -577,8 +553,6 @@ export class VirtualCube {
             'D': { axis: 'y', filter: c => c.y < -0.1, angle: 1 },
             'F': { axis: 'z', filter: c => c.z > 0.1,  angle: -1 },
             'B': { axis: 'z', filter: c => c.z < -0.1, angle: 1 },
-
-            // CFOP Moves (Slice & Rotation)
             'M': { axis: 'x', filter: c => Math.abs(c.x) < 0.1, angle: 1 }, 
             'E': { axis: 'y', filter: c => Math.abs(c.y) < 0.1, angle: 1 },
             'S': { axis: 'z', filter: c => Math.abs(c.z) < 0.1, angle: -1 },
@@ -625,20 +599,53 @@ export class VirtualCube {
     setSolution(moves) {
         this.solutionMoves = moves; this.currentMoveIdx = -1;
     }
+
+
+    getSmartRotation(move) {
+        let base = move.charAt(0).toUpperCase();
+        const HOME_VIEW = { x: 0.4, y: -0.6, z: 0 }; 
+
+        if (['F', 'R', 'U', 'M', 'E', 'S'].includes(base)) return HOME_VIEW;
+        if (base === 'B') return { x: 0.4, y: -Math.PI + 0.6, z: 0 };
+        if (base === 'L') return { x: 0.4, y: 0.6, z: 0 };
+        if (base === 'D') return { x: -0.8, y: -0.6, z: 0 };
+        
+        return HOME_VIEW;
+    }
+
+
+    shouldRotate(target) {
+        const current = this.cubeGroup.rotation;
+        const THRESHOLD = 0.2;
+        
+        return Math.abs(current.x - target.x) > THRESHOLD ||
+               Math.abs(current.y - target.y) > THRESHOLD ||
+               Math.abs(current.z - target.z) > THRESHOLD;
+    }
     
 
     nextMove() {
-        if (this.moveAnim.active || this.currentMoveIdx >= this.solutionMoves.length - 1) return;
+        if (this.moveAnim.active || this.rotationState.active) return;
+        if (this.currentMoveIdx >= this.solutionMoves.length - 1) return;
 
         this.currentMoveIdx++;
         const move = this.solutionMoves[this.currentMoveIdx];
-        this.animateMove(move);
+        const smartRot = this.getSmartRotation(move);
+        
+        if (smartRot && this.shouldRotate(smartRot)) {
+            this.rotationState.duration = 450;
+            this.setTargetRotation(smartRot);
+            setTimeout(() => {
+                this.animateMove(move);
+            }, 460);
+        } else {
+            this.animateMove(move);
+        }
     }
 
 
     prevMove() {
         if (this.moveAnim.active || this.currentMoveIdx < 0) return;
-
         const move = this.solutionMoves[this.currentMoveIdx];
         this.currentMoveIdx--;
         this.animateMove(this.invertMove(move));

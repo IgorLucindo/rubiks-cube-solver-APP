@@ -2,7 +2,7 @@ import { VideoCapture } from "./classes/video_capture.js";
 import { VirtualCube } from "./classes/virtual_cube.js";
 
 
-const DEBUG = true;
+const DEBUG = false;
 const videoCap = new VideoCapture();
 const virtualCube = new VirtualCube();
 

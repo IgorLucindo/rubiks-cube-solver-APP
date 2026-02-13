@@ -8,22 +8,8 @@
     height: 100%;
 }
 
-canvas#canvasOutput{
-    width: 100%;
-    height: auto;
-    aspect-ratio: 4 / 3;
-    max-height: 80vh;
-    border: 2px solid #555;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    background: #1a1a1a;
-    object-fit: contain;
-}
-
-video {
-    display: none;
-}
-
-#cameraPlaceholder {
+.camera-wrapper {
+    position: relative;
     width: 100%;
     aspect-ratio: 4 / 3;
     max-height: 80vh;
@@ -31,8 +17,55 @@ video {
     border: 2px solid #555;
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
     display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.placeholder-content {
+    display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     color: #444;
+}
+
+canvas#canvasOutput {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #1a1a1a;
+    z-index: 2;
+}
+
+video {
+    display: none;
+}
+
+.tv-off {
+    animation: tvOff 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+@keyframes tvOff {
+    0% {
+        transform: scale(1, 1);
+        opacity: 1;
+        filter: brightness(1);
+    }
+    40% {
+        transform: scale(1, 0.02);
+        opacity: 1;
+        filter: brightness(2);
+    }
+    70% {
+        transform: scale(0.1, 0.02);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0, 0);
+        opacity: 0;
+    }
 }
