@@ -162,7 +162,7 @@
     .cube-container {
         max-width: 100%;
         width: 100%;
-        flex: 0.8;
+        flex: 0.5;
         min-height: 0;
     }
 
@@ -176,6 +176,6 @@
     }
 
     body.scan-complete .cube-container {
-        flex: 3;
+        flex: 1;
     }
 }

@@ -56,7 +56,10 @@ export class VideoCapture {
 
     start() {
         return new Promise((resolve, reject) => {
-            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+            navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment" }, 
+                audio: false 
+            })
                 .then((stream) => {
                     this.video.srcObject = stream;
                     this.video.play();
