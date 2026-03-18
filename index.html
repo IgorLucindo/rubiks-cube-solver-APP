@@ -14,11 +14,17 @@
 </head>
 
 <body>
-    <button id="forceCubeBtn" class="debug-btn">FORCE UNSOLVED CUBE</button>
-    <button id="autoSolveBtn" class="debug-btn" style="top: 70px;">AUTO SOLVE</button>
-
     <header class="app-header">
-        <h1>Rubik's Cube Tutorial</h1>
+        <div class="header-inner">
+            <button id="debugMenuBtn" class="debug-menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="debugMenu">≡</button>
+            <h1>Rubik's Cube Tutorial</h1>
+        </div>
+
+        <div class="debug-menu" id="debugMenu" aria-hidden="true">
+            <div class="debug-menu-title">Menu</div>
+            <button id="forceCubeBtn" class="debug-menu-item debug-danger">Force unsolved cube</button>
+            <button id="autoSolveBtn" class="debug-menu-item">Auto solve</button>
+        </div>
     </header>
 
     <p id="status">Hold cube with <b>WHITE</b> face on <b>BOTTOM</b>.<br>Scan ANY face to start.</p>
@@ -44,9 +50,14 @@
                 <div class="rotate-icon" title="Drag to Rotate">
                     <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
                 </div>
+                <button id="undoScanBtn" class="undo-scan-btn" title="Undo last scan" onclick="_undoScan()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 5c-3.86 0-7 3.14-7 7H2l3.5 3.5L9 12H6c0-3.31 2.69-6 6-6 2.74 0 5.06 1.85 5.77 4.37l1.9-.62C18.68 8.87 15.63 5 12 5zm6.5 6.5L15 8h3c0 3.31-2.69 6-6 6-2.74 0-5.06-1.85-5.77-4.37l-1.9.62C5.32 15.13 8.37 19 12 19c3.86 0 7-3.14 7-7h3l-3.5-3.5z"/>
+                    </svg>
+                </button>
                 <div class="controls" id="solutionControls" style="display:none;">
-                    <button onclick="_prevMove()">&lt;</button>
-                    <button onclick="_nextMove()"">&gt;</button>
+                    <button id="prevMoveBtn" onclick="_prevMove()">&lt;</button>
+                    <button id="nextMoveBtn" onclick="_nextMove()">&gt;</button>
                 </div>
             </div>
         </div>

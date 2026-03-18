@@ -1,8 +1,8 @@
 import { VideoCapture } from "./classes/video_capture.js";
 import { VirtualCube } from "./classes/virtual_cube.js";
+import { initToggleMenu } from "./utils/menu_utils.js";
 
 
-const DEBUG = false;
 const videoCap = new VideoCapture();
 const virtualCube = new VirtualCube();
 
@@ -34,17 +34,5 @@ window.cvReady.then(() => {
         });
 });
 
-// Debug menu
-if (DEBUG) {
-    const forceBtn = document.getElementById('forceCubeBtn');
-    const autoBtn = document.getElementById('autoSolveBtn');
 
-    forceBtn.style.display = 'block';
-    forceBtn.addEventListener('click', () => {
-        virtualCube.forceUnsolvedState();
-    });
-    autoBtn.style.display = 'block';
-    autoBtn.addEventListener('click', () => {
-        virtualCube.autoSolve();
-    });
-}
+initToggleMenu(virtualCube);

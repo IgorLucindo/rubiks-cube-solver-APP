@@ -46,6 +46,49 @@
     animation: spin-hint 2s ease-out 1;
 }
 
+.undo-scan-btn {
+    position: absolute;
+    top: 11px;
+    right: 48px;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(0, 0, 0, 0.35);
+    color: rgba(255, 255, 255, 0.85);
+    z-index: 25;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    backdrop-filter: blur(6px);
+    transition: background 160ms ease, transform 160ms ease, opacity 160ms ease, border-color 160ms ease;
+}
+
+.undo-scan-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.undo-scan-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.26);
+}
+
+.undo-scan-btn:active {
+    transform: scale(0.98);
+}
+
+.undo-scan-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.undo-scan-btn:disabled:hover {
+    background: rgba(0, 0, 0, 0.35);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
 .rotate-icon svg {
     fill: currentColor;
     width: 100%;
@@ -91,6 +134,18 @@
     background: rgba(255, 255, 255, 0.1);
     color: #fff;
     transform: none;
+}
+
+.controls button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.02);
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.controls button:disabled:hover {
+    background: rgba(255, 255, 255, 0.02);
+    color: rgba(255, 255, 255, 0.55);
 }
 
 .controls button:active {
