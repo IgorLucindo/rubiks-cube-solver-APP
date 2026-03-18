@@ -93,8 +93,11 @@ export class VirtualCube {
     initThreeJS() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-        const camera_posz = 7 ? 7.7 : this.cfg.isMobile;
-        this.camera.position.set(0, 0, camera_posz); 
+        if (this.cfg.isMobile) {
+            this.camera.position.set(0, -0.2, 7.7); 
+        } else {
+            this.camera.position.set(0, 0, 9); 
+        }
 
         this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
         this.container.appendChild(this.renderer.domElement);
