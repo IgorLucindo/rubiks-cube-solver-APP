@@ -171,9 +171,17 @@ body.grabbing #threeContainer {
     
     .app-layout {
         flex-direction: column;
-        padding: 10px 15px max(80px, env(safe-area-inset-bottom, 80px)) 15px;
+        padding: 10px 15px max(60px, env(safe-area-inset-bottom, 60px)) 15px; 
         gap: 10px;
         height: 100%;
         justify-content: flex-start;
+    }
+
+    .copyright {
+        position: relative;
+        bottom: auto;
+        right: auto;
+        margin: 20px 0;
+        text-align: center;
     }
 }
